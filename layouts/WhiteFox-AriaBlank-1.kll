@@ -7,6 +7,7 @@ KLL = "0.3c";
 Date = "2016-05-30";
 Generator = "KIICONF 0.2";
 
+# Function Row
 U"ESC" : U"BACKTICK";
 U"1" : U"F1";
 U"2" : U"F2";
@@ -20,24 +21,33 @@ U"9" : U"F9";
 U"0" : U"F10";
 U"MINUS" : U"F11";
 U"EQUAL" : U"F12";
+
+# TKL Buttons
 U"BACKSPACE" : U"DELETE";
+U"Q" : U"HOME";
+U"E" : U"END";
+
+# Media
 U"LBRACE" : CONS"BRIGHTNESSDECREMENT";
 U"RBRACE" : CONS"BRIGHTNESSINCREMENT";
 U"M" : CONS"MUTE";
 U"UP" : CONS"VOLUMEUP";
-U"LEFT" : CONS"SCANPREVIOUSTRACK";
 U"DOWN" : CONS"VOLUMEDOWN";
+U"LEFT" : CONS"SCANPREVIOUSTRACK";
 U"RIGHT" : CONS"SCANNEXTTRACK";
+U"P" : CONS"PLAY";
+
+# Keyboard
+U"DELETE" : ledControl( 5, 0, 0 );
+U"PAGEUP" : ledControl( 4, 15, 0 );
+U"PAGEDOWN" : ledControl( 3, 15, 0 );
+
+# Macros
 U"BACKSLASH" : U"CTRL" + U"BACKSLASH";
 U"C" : U"CAPSLOCK";
-U"Q" : U"HOME";
-U"E" : U"END";
 U"A" : U"LEFT";
 U"S" : U"DOWN";
 U"D" : U"RIGHT";
 U"W" : U"UP";
 U"R" : U"PAGEUP";
 U"F" : U"PAGEDOWN";
-U"DELETE" : ledControl( 5, 0, 0 );
-U"PAGEUP" : ledControl( 4, 15, 0 );
-U"PAGEDOWN" : ledControl( 3, 15, 0 );
