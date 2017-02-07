@@ -891,7 +891,7 @@ class OperationSpecificsStage( Stage ):
 			( 'CodeEnd',          ( r'\]', ) ),
 			( 'Position',         ( r'r?[xyz]:-?[0-9]+(.[0-9]+)?', ) ),
 			( 'PixelOperator',    ( r'(\+:|-:|>>|<<)', ) ),
-			( 'RelCROperator',    ( r'[cr]:i[+-]', ) ),
+			( 'RelCROperator',    ( r'[cr]:i[+-]?', ) ),
 			( 'ColRowOperator',   ( r'[cr]:', ) ),
 
 			( 'String',           ( r'"[^"]*"', ) ),
@@ -2022,8 +2022,11 @@ class DataAnalysisStage( Stage ):
 
 			# Add each expression in layer to overall dictionary lookup for command reduction
 			for key, elem in layer.organization.mapping_data.data.items():
-				expressions[ elem[0].kllify() ] = elem[0]
+				# Add each of the expressions (usually just one)
+				for sub_expr in elem:
+					expressions[ sub_expr.kllify() ] = sub_expr
 
+				# We only need to use the first expression, as the triggers are all the same
 				# Determine min ScanCode of each trigger expression
 				min_uid = elem[0].min_trigger_uid()
 				if min_uid < self.min_scan_code[ index ]:
@@ -2102,20 +2105,22 @@ class DataAnalysisStage( Stage ):
 
 			# Iterate over each expression
 			for key, elem in layer.organization.mapping_data.data.items():
-				# Get list of ids from expression
-				# Append each uid (if a ScanCode) to Trigger List
-				for identifier in elem[0].trigger_id_list():
-					if identifier.type == 'ScanCode':
-						# In order to uniquely identify each trigger, using full kll expression as lookup
-						trigger_index = self.trigger_index_lookup[ elem[0].kllify() ]
+				# Each trigger, may have multiple results
+				for sub_expr in elem:
+					# Get list of ids from expression
+					# Append each uid (if a ScanCode) to Trigger List
+					for identifier in sub_expr.trigger_id_list():
+						if identifier.type == 'ScanCode':
+							# In order to uniquely identify each trigger, using full kll expression as lookup
+							trigger_index = self.trigger_index_lookup[ sub_expr.kllify() ]
 
-						# Initialize trigger list if None
-						if self.trigger_lists[ index ][ identifier.uid ] is None:
-							self.trigger_lists[ index ][ identifier.uid ] = [ trigger_index ]
+							# Initialize trigger list if None
+							if self.trigger_lists[ index ][ identifier.uid ] is None:
+								self.trigger_lists[ index ][ identifier.uid ] = [ trigger_index ]
 
-						# Append to trigger list, only if trigger not already added
-						elif trigger_index not in self.trigger_lists[ index ][ identifier.uid ]:
-							self.trigger_lists[ index ][ identifier.uid ].append( trigger_index )
+							# Append to trigger list, only if trigger not already added
+							elif trigger_index not in self.trigger_lists[ index ][ identifier.uid ]:
+								self.trigger_lists[ index ][ identifier.uid ].append( trigger_index )
 
 			# Debug output
 			if self.data_analysis_debug:
@@ -2137,6 +2142,12 @@ class DataAnalysisStage( Stage ):
 		# Query the scancode and pixels positions
 		scancode_physical = self.full_context.query( 'DataAssociationExpression', 'ScanCodePosition' )
 		pixel_physical = self.full_context.query( 'DataAssociationExpression', 'PixelPosition' )
+		pixel_indices = self.full_context.query( 'MapExpression', 'PixelChannel' )
+
+		pixel_indices_filtered = list( filter( lambda x: not isinstance( x.position, list ), pixel_indices.data.values() ) )
+		#print( list( pixel_indices_filtered ) )
+		#for item in list( pixel_indices_filtered ):
+		#	print( item )
 		physical = scancode_physical.data.copy()
 		physical.update( pixel_physical.data )
 
@@ -2159,6 +2170,19 @@ class DataAnalysisStage( Stage ):
 			uid = item.association[0].uid
 			if isinstance( uid, id.PixelAddressId ):
 				uid = uid.index
+
+			# Use the ScanCode to perform a pixel uid lookup
+			else:
+				# Filter list, looking for ScanCode uid
+				lookup = list( filter( lambda x: x.position.uid == uid, pixel_indices_filtered ) )
+
+				# Then lookup the pixel uid
+				if len( lookup ) > 0:
+					uid = lookup[0].pixel.uid.index
+
+				# Unused scancode position
+				else:
+					uid = 0
 
 			positions[ uid ] = entry
 
